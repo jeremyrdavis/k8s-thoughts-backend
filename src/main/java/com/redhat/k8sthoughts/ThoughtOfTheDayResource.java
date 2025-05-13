@@ -5,8 +5,9 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import java.util.Random;
 
-@Path("/thoughts")
+@Path("/api/thoughts")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class ThoughtOfTheDayResource {
@@ -24,6 +25,17 @@ public class ThoughtOfTheDayResource {
             throw new WebApplicationException("Thought with id " + id + " does not exist.", 404);
         }
         return thought;
+    }
+
+    @GET
+    @Path("/random")
+    public ThoughtOfTheDay getRandom() {
+        List<ThoughtOfTheDay> thoughts = ThoughtOfTheDay.listAll();
+        if (thoughts.isEmpty()) {
+            throw new WebApplicationException("No thoughts available.", 404);
+        }
+        Random random = new Random();
+        return thoughts.get(random.nextInt(thoughts.size()));
     }
 
     @POST
