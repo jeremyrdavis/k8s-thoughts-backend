@@ -1,10 +1,13 @@
 package com.redhat.k8sthoughts;
 
+import io.quarkus.logging.Log;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 @Path("/api/thoughts")
@@ -12,36 +15,44 @@ import java.util.Random;
 @Consumes(MediaType.APPLICATION_JSON)
 public class ThoughtOfTheDayResource {
 
+    @Inject
+    ThoughtOfTheDayRepository thoughtOfTheDayRepository;
+
     @GET
     public List<ThoughtOfTheDay> list() {
-        return ThoughtOfTheDay.listAll();
+        return thoughtOfTheDayRepository.listAll();
     }
 
     @GET
     @Path("/{id}")
     public ThoughtOfTheDay get(@PathParam("id") Long id) {
-        ThoughtOfTheDay thought = ThoughtOfTheDay.findById(id);
-        if (thought == null) {
+        Log.debugf("Fetching thought with id %d", id);
+        Optional<ThoughtOfTheDay> thought = thoughtOfTheDayRepository.findByIdOptional(id);
+        if(thought.isPresent()){
+            Log.debugf("Thought with id %d found: %s", id, thought.get());
+            return  thought.get();
+        }else {
             throw new WebApplicationException("Thought with id " + id + " does not exist.", 404);
         }
-        return thought;
     }
 
     @GET
     @Path("/random")
     public ThoughtOfTheDay getRandom() {
-        List<ThoughtOfTheDay> thoughts = ThoughtOfTheDay.listAll();
+        List<ThoughtOfTheDay> thoughts = thoughtOfTheDayRepository.listAll();
         if (thoughts.isEmpty()) {
             throw new WebApplicationException("No thoughts available.", 404);
         }
         Random random = new Random();
-        return thoughts.get(random.nextInt(thoughts.size()));
+        ThoughtOfTheDay thought = thoughts.get(random.nextInt(thoughts.size()));
+        Log.debugf("Random thought selected: %s", thought);
+        return thought;
     }
 
     @POST
     @Transactional
     public Response create(ThoughtOfTheDay thought) {
-        thought.persist();
+        thoughtOfTheDayRepository.persist(thought);
         return Response.status(201).entity(thought).build();
     }
 
@@ -49,27 +60,27 @@ public class ThoughtOfTheDayResource {
     @Path("/{id}")
     @Transactional
     public ThoughtOfTheDay update(@PathParam("id") Long id, ThoughtOfTheDay thought) {
-        ThoughtOfTheDay existingThought = ThoughtOfTheDay.findById(id);
-        if (existingThought == null) {
+        Optional<ThoughtOfTheDay> existingThought = thoughtOfTheDayRepository.findByIdOptional(id);
+        if (existingThought.isPresent()) {
+            ThoughtOfTheDay existing = existingThought.get();
+            existing.thought = thought.thought;
+            existing.author = thought.author;
+            existing.day = thought.day;
+            thoughtOfTheDayRepository.persist(existing);
+            return existing;
+        }else{
             throw new WebApplicationException("Thought with id " + id + " does not exist.", 404);
         }
-        
-        existingThought.thought = thought.thought;
-        existingThought.author = thought.author;
-        existingThought.day = thought.day;
-        
-        return existingThought;
     }
 
     @DELETE
     @Path("/{id}")
     @Transactional
     public Response delete(@PathParam("id") Long id) {
-        ThoughtOfTheDay thought = ThoughtOfTheDay.findById(id);
-        if (thought == null) {
+        if(thoughtOfTheDayRepository.deleteById(id)){
+            return Response.status(204).build();
+        }else {
             throw new WebApplicationException("Thought with id " + id + " does not exist.", 404);
         }
-        thought.delete();
-        return Response.status(204).build();
     }
 } 

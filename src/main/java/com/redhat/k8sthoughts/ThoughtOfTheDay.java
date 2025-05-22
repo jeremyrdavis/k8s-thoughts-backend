@@ -2,14 +2,22 @@ package com.redhat.k8sthoughts;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "k8s_thoughts")
-public class ThoughtOfTheDay extends PanacheEntity {
+public class ThoughtOfTheDay {
+    @Id
+    @GeneratedValue
+    Long id;
+
     public String thought;
+
     public String author;
+
     public LocalDate day;
 
     public ThoughtOfTheDay() {
@@ -27,6 +35,14 @@ public class ThoughtOfTheDay extends PanacheEntity {
         return day;
     }
 
-
+    @Override
+    public String toString() {
+        return "ThoughtOfTheDay{" +
+                "id=" + id +
+                ", thought='" + thought + '\'' +
+                ", author='" + author + '\'' +
+                ", day=" + day +
+                '}';
+    }
 }
  
