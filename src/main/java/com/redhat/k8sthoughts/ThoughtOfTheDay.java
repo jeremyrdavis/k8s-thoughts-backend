@@ -23,6 +23,18 @@ public class ThoughtOfTheDay {
     public ThoughtOfTheDay() {
     }
 
+    public ThoughtOfTheDay(String thought, String author, String day) {
+        this.thought = thought;
+        this.author = author;
+        this.day = LocalDate.parse(day);
+    }
+    
+    public ThoughtOfTheDay(String thought, String author, LocalDate day) {
+        this.thought = thought;
+        this.author = author;
+        this.day = day;
+    }
+
     public String getThought() {
         return thought;
     }
